@@ -1,101 +1,102 @@
 package ws.beauty.salon.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import io.swagger.v3.oas.annotations.*;
+import ws.beauty.salon.AppointmentRequest;
+import ws.beauty.salon.AppointmentResponse;
+import ws.beauty.salon.AppointmentService;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import ws.beauty.salon.dto.AppointmentRequest;
-import ws.beauty.salon.model.Appointment;
-import ws.beauty.salon.service.AppointmentService;
 
 @RestController
-@RequestMapping("/api/v1/appointments")
-@Tag(name = "Appointments", description = "Provides methods for managing appointments")
+@RequestMapping("/api/appointments")
+@RequiredArgsConstructor
+@Tag(
+    name = "Appointments",
+    description = "Controller for managing salon appointments"
+)
+
 public class AppointmentController {
 
-    @Autowired
-    private AppointmentService service;
+    private final AppointmentService appointmentService;
 
-    @Autowired
-    private ModelMapper modelMapper;
 
-    @Operation(summary = "Get all appointments")
     @GetMapping
-    public List<Appointment> getAll() {
-        return service.getAll();
+    public ResponseEntity<List<AppointmentResponse>> findAll(
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "size", required = false) Integer size) {
+
+        if (page != null && size != null) {
+            return ResponseEntity.ok(appointmentService.findAll(page, size));
+        }
+        return ResponseEntity.ok(appointmentService.findAll());
     }
 
-    @Operation(summary = "Get all appointments with pagination")
-    @GetMapping(value = "pagination", params = { "page", "pageSize" })
-    public List<Appointment> getAllPaginated(@RequestParam(defaultValue = "0") int page,
-                                             @RequestParam(defaultValue = "10") int pageSize) {
-        return service.getAll(page, pageSize);
+  
+    @GetMapping("/{id}")
+    public ResponseEntity<AppointmentResponse> findById(@PathVariable Integer id) {
+        return ResponseEntity.ok(appointmentService.findById(id));
     }
 
-    @Operation(summary = "Get appointments ordered by date")
-    @GetMapping("orderByDate")
-    public List<Appointment> getAllOrderByDate() {
-        return service.getAllOrderByDate();
-    }
-
-    @Operation(summary = "Get an appointment by its ID")
-    @GetMapping("{idAppointment}")
-    public ResponseEntity<Appointment> getById(@PathVariable Integer idAppointment) {
-        Appointment appointment = service.getById(idAppointment);
-        return (appointment != null)
-                ? new ResponseEntity<>(appointment, HttpStatus.OK)
-                : new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }
-
-    @Operation(summary = "Get appointments by status")
-    @GetMapping("status/{status}")
-    public List<Appointment> getByStatus(@PathVariable String status) {
-        return service.getByStatus(status);
-    }
-
-    @Operation(summary = "Get appointments by client ID")
-    @GetMapping("client/{clientId}")
-    public List<Appointment> getByClient(@PathVariable Integer clientId) {
-        return service.getByClient(clientId);
-    }
-
-    @Operation(summary = "Create a new appointment")
+   
     @PostMapping
-    public ResponseEntity<AppointmentRequest> add(@Valid @RequestBody AppointmentRequest appointmentDTO) {
-        Appointment saved = service.save(convertToEntity(appointmentDTO));
-        return new ResponseEntity<>(convertToDTO(saved), HttpStatus.CREATED);
+    public ResponseEntity<AppointmentResponse> create(@Valid @RequestBody AppointmentRequest request) {
+        AppointmentResponse created = appointmentService.create(request);
+        return ResponseEntity.ok(created);
     }
 
-    @Operation(summary = "Update an appointment")
-    @PutMapping("{idAppointment}")
-    public ResponseEntity<AppointmentRequest> update(@PathVariable Integer idAppointment,@Valid @RequestBody AppointmentRequest appointmentDTO) {
-        Appointment existing = service.getById(idAppointment);
-        if (existing == null) return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+   
+    @PutMapping("/{id}")
+    public ResponseEntity<AppointmentResponse> update(
+            @PathVariable Integer id,
+            @Valid @RequestBody AppointmentRequest request) {
 
-        Appointment updated = convertToEntity(appointmentDTO);
-        updated.setId(idAppointment);
-        service.save(updated);
-        return new ResponseEntity<>(convertToDTO(updated), HttpStatus.OK);
+        AppointmentResponse updated = appointmentService.update(id, request);
+        return ResponseEntity.ok(updated);
     }
 
-    @Operation(summary = "Delete an appointment")
-    @DeleteMapping("{idAppointment}")
-    public ResponseEntity<Void> delete(@PathVariable Integer idAppointment) {
-        service.delete(idAppointment);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+   
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+        appointmentService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
-    private AppointmentRequest convertToDTO(Appointment appointment) {
-        return modelMapper.map(appointment, AppointmentRequest.class);
+ 
+    @GetMapping("/by-client/{idClient}")
+    public ResponseEntity<List<AppointmentResponse>> findByClientId(@PathVariable Integer idClient) {
+        return ResponseEntity.ok(appointmentService.findByClientId(idClient));
     }
 
-    private Appointment convertToEntity(AppointmentRequest dto) {
-        return modelMapper.map(dto, Appointment.class);
+
+    @GetMapping("/by-stylist/{idStylist}")
+    public ResponseEntity<List<AppointmentResponse>> findByStylistId(@PathVariable Integer idStylist) {
+        return ResponseEntity.ok(appointmentService.findByStylistId(idStylist));
+    }
+
+ 
+    @GetMapping("/by-status")
+    public ResponseEntity<List<AppointmentResponse>> findByStatus(
+            @RequestParam("status") String status) {
+        return ResponseEntity.ok(appointmentService.findByStatus(status));
+    }
+
+  
+    @GetMapping("/by-date-range")
+    public ResponseEntity<List<AppointmentResponse>> findByDateRange(
+            @RequestParam("start")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam("end")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+
+        return ResponseEntity.ok(appointmentService.findByDateRange(start, end));
     }
 }
