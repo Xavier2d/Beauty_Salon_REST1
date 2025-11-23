@@ -1,97 +1,93 @@
 package ws.beauty.salon.controller;
 
-
-import java.net.URI;
+import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.http.*;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import ws.beauty.salon.dto.ClientRequest;
-import ws.beauty.salon.dto.ClientResponse;
 
-import ws.beauty.salon.service.ClientService;
-@SuppressWarnings("null")
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import cws.beauty.salon.ClientRequest;
+import ws.beauty.salon.ClientResponse;
+import cws.beauty.salon.ClientService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
-@RequestMapping("/api/v1/clients")
+@RequestMapping("/api/clients")
 @RequiredArgsConstructor
-@Validated
+@Tag(
+    name = "Clients",
+    description = "Controller for managing salon clients"
+)
+
 public class ClientController {
-private final ClientService service;
 
-    //  Obtener todos los clientes
+    private final ClientService clientService;
+
+   
     @GetMapping
-    @Operation(summary = "Get all clients")
-    @ApiResponse(responseCode = "200", description = "List of registered clients.", content = {
-            @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ClientResponse.class))) })
-    public List<ClientResponse> findAll() {
-        return service.findAll();
-    }
+    public ResponseEntity<List<ClientResponse>> findAll(
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "size", required = false) Integer size) {
 
-    //  Obtener clientes con paginación
-    @GetMapping(value = "/pagination", params = { "page", "pageSize" })
-    @Operation(summary = "Get all clients with pagination")
-    public List<ClientResponse> findAll(
-            @RequestParam(value = "page", defaultValue = "0", required = false) int page,
-            @RequestParam(value = "pageSize", defaultValue = "10", required = false) int pageSize) {
-        if (page < 0 || pageSize < 0 || (page == 0 && pageSize == 0)) {
-            throw new IllegalArgumentException(
-                    "Invalid pagination parameters: page and pageSize cannot be negative and cannot both be 0.");
+        if (page != null && size != null) {
+            return ResponseEntity.ok(clientService.findAll(page, size));
         }
-        return service.findAll(page, pageSize);
+        return ResponseEntity.ok(clientService.findAll());
     }
 
-    //  Obtener cliente por su ID
+
     @GetMapping("/{id}")
-    @Operation(summary = "Get client by ID")
-    public ClientResponse findById(@PathVariable Integer id) {
-        return service.findById(id);
+    public ResponseEntity<ClientResponse> findById(@PathVariable Integer id) {
+        return ResponseEntity.ok(clientService.findById(id));
     }
 
-    //  Crear un nuevo cliente
     @PostMapping
-    @Operation(summary = "Create new client")
-    public ResponseEntity<ClientResponse> create(@Valid @RequestBody ClientRequest req) {
-        ClientResponse created = service.create(req);
-        return ResponseEntity
-                .created(URI.create("/api/v1/clients/" + created.getId()))
-                .body(created);
+    public ResponseEntity<ClientResponse> create(@Valid @RequestBody ClientRequest request) {
+        ClientResponse created = clientService.create(request);
+        return ResponseEntity.ok(created);
     }
 
-    //  Actualizar un cliente
+  
     @PutMapping("/{id}")
-    @Operation(summary = "Update existing client")
-    public ClientResponse update(@PathVariable Integer id, @Valid @RequestBody ClientRequest req) {
-        return service.update(id, req);
+    public ResponseEntity<ClientResponse> update(
+            @PathVariable Integer id,
+            @Valid @RequestBody ClientRequest request) {
+
+        ClientResponse updated = clientService.update(id, request);
+        return ResponseEntity.ok(updated);
     }
 
-    //  Eliminar un cliente
+  
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete client by ID")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        service.delete(id);
+        clientService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    //  Buscar clientes por correo electrónico
-    @GetMapping("/email")
-    @Operation(summary = "Find client by email")
-    public ClientResponse findByEmail(@RequestParam String email) {
-        return service.findByEmail(email);
+ 
+    @GetMapping("/by-email")
+    public ResponseEntity<ClientResponse> findByEmail(@RequestParam("email") String email) {
+        return ResponseEntity.ok(clientService.findByEmail(email));
     }
 
-    //  Buscar clientes por nombre
-    @GetMapping("/name")
-    @Operation(summary = "Find clients by name")
-    public List<ClientResponse> findByName(@RequestParam String name) {
-        return service.findByName(name);
+    @GetMapping("/search")
+    public ResponseEntity<List<ClientResponse>> searchByName(@RequestParam("keyword") String keyword) {
+        return ResponseEntity.ok(clientService.searchByName(keyword));
+    }
+
+
+    @GetMapping("/by-registration-range")
+    public ResponseEntity<List<ClientResponse>> findByRegistrationDateRange(
+            @RequestParam("start")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam("end")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+
+        return ResponseEntity.ok(clientService.findByRegistrationDateRange(start, end));
     }
 }
+
