@@ -1,0 +1,321 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+# ----------------------
+# Query unificada
+# ----------------------
+type Query {
+  # Notes
+  findAllNotes: [AppointmentNoteResponse]
+  findNoteById(idNote: Int): AppointmentNoteResponse
+
+  # Attendance Logs
+  findAllAttendanceLogs: [AttendanceLogResponse]
+  findAllPaged(page: Int, pageSize: Int): [AttendanceLogResponse]
+  findAttendanceById(idAttendance: Int): AttendanceLogResponse
+  findByStylistId(stylistId: Int): [AttendanceLogResponse]
+  findByCheckInBetween(start: String, end: String): [AttendanceLogResponse]
+  countByStylistId(stylistId: Int): Int
+  countByCheckInBetween(start: String, end: String): Int
+  hasOpenAttendance(stylistId: Int): Boolean
+
+  # Clients
+  findAllClients: [ClientResponse]
+  findAllClientsPaged(page: Int, pageSize: Int): [ClientResponse]
+  findClientById(id: Int): ClientResponse
+  findClientByEmail(email: String!): ClientResponse
+  findClientsByName(name: String!): [ClientResponse]
+
+  # Notifications
+  findAllNotifications: [NotificationResponse]
+  findAllNotificationsPaged(page: Int, pageSize: Int): [NotificationResponse]
+  findNotificationById(idNotification: Int): NotificationResponse
+  findNotificationsByClientId(clientId: Int): [NotificationResponse]
+  findNotificationsBySentVia(sentVia: String!): [NotificationResponse]
+  findNotificationsBySentAtBetween(start: String!, end: String!): [NotificationResponse]
+
+  # Payments
+  findAllPayments: [PaymentResponse]
+  findAllPaymentsPaged(page: Int, pageSize: Int): [PaymentResponse]
+  findPaymentById(idPayment: Int): PaymentResponse
+  findPaymentByAppointmentId(appointmentId: Int): PaymentResponse
+  findPaymentsByClientId(clientId: Int): [PaymentResponse]
+  findPaymentsByStylistId(stylistId: Int): [PaymentResponse]
+  findPaymentsByDateRange(start: String!, end: String!): [PaymentResponse]
+  getTotalPaymentsBetweenDates(start: String!, end: String!): Float
+  getTotalPaymentsByClient(clientId: Int!): Float
+  getTotalPaymentsByStylist(stylistId: Int!): Float
+  existsPaymentByAppointment(appointmentId: Int!): Boolean
+
+  # Price Histories
+  findAllPriceHistories: [PriceHistoryResponse]
+  findPriceHistoryById(id: Int): PriceHistoryResponse
+  findPriceHistoriesByService(serviceId: Int): [PriceHistoryResponse]
+  findPriceHistoriesByUser(userId: Int): [PriceHistoryResponse]
+
+  # Reschedule Requests
+  findAllRescheduleRequests: [RescheduleRequestResponse]
+  findRescheduleRequestById(id: Int): RescheduleRequestResponse
+  findRescheduleRequestsByClient(clientId: Int): [RescheduleRequestResponse]
+  findRescheduleRequestsByStatus(status: String): [RescheduleRequestResponse]
+
+  # Services
+  findAllServices: [ServiceResponse]
+  findServiceById(id: Int!): ServiceResponse
+  findServicesByName(name: String!): [ServiceResponse]
+  findServicesByCategory(categoryId: Int!): [ServiceResponse]
+
+  # Stylists
+  findAll: [StylistResponse]
+  findById(idStylist: Int): StylistResponse
+
+  # Stylist Services
+  findAllStylistServices: [StylistServiceResponse]
+  findStylistServiceById(id: Int!): StylistServiceResponse
+  findStylistServicesByStylist(stylistId: Int!): [StylistServiceResponse]
+  findStylistServicesByService(serviceId: Int!): [StylistServiceResponse]
+
+  # Users
+  findAllUsers: [UserResponse]
+  getAllUsers(page: Int!, pageSize: Int!): [UserResponse]
+  findUserById(id: Int!): UserResponse
+  findUsersByRole(role: String!): [UserResponse]
+  findUsersByUsername(username: String!): [UserResponse]
+}
+
+# ----------------------
+# Mutation unificada
+# ----------------------
+type Mutation {
+  # Notes
+  createNote(req: AppointmentNoteRequest): AppointmentNoteResponse
+  updateNote(idNote: Int, req: AppointmentNoteRequest): AppointmentNoteResponse
+  deleteNote(idNote: Int): Boolean
+
+  # Attendance Logs
+  createAttendance(request: AttendanceLogRequest): AttendanceLogResponse
+  updateAttendance(idAttendance: Int, request: AttendanceLogRequest): AttendanceLogResponse
+  deleteAttendance(idAttendance: Int): Boolean
+  closeAttendance(stylistId: Int): AttendanceLogResponse
+
+  # Clients
+  createClient(request: ClientRequest!): ClientResponse
+  updateClient(id: Int!, request: ClientRequest!): ClientResponse
+  deleteClient(id: Int!): Boolean
+
+  # Notifications
+  createNotification(request: NotificationRequest!): NotificationResponse
+  updateNotification(idNotification: Int!, request: NotificationRequest!): NotificationResponse
+  deleteNotification(idNotification: Int!): Boolean
+
+  # Payments
+  createPayment(request: PaymentRequest!): PaymentResponse
+  updatePayment(idPayment: Int!, request: PaymentRequest!): PaymentResponse
+
+  # Price Histories
+  createPriceHistory(request: PriceHistoryRequest!): PriceHistoryResponse
+  updatePriceHistory(id: Int!, request: PriceHistoryRequest!): PriceHistoryResponse
+  deletePriceHistory(id: Int!): Boolean
+
+  # Reschedule Requests
+  createRescheduleRequest(request: RescheduleRequestRequest!): RescheduleRequestResponse
+  updateRescheduleRequest(id: Int!, request: RescheduleRequestRequest!): RescheduleRequestResponse
+  deleteRescheduleRequest(id: Int!): Boolean
+
+  # Services
+  createService(req: ServiceRequest): ServiceResponse
+  updateService(id: Int!, req: ServiceRequest): ServiceResponse
+  deleteService(id: Int!): Boolean
+
+  # Stylists
+  create(req: StylistRequest): StylistResponse
+  update(idStylist: Int, req: StylistRequest): StylistResponse
+  delete(idStylist: Int): Boolean
+
+  # Stylist Services
+  createStylistService(req: StylistServiceRequest): StylistServiceResponse
+  deleteStylistService(id: Int!): Boolean
+
+  # Users
+  createUser(req: UserRequest): UserResponse
+  updateUser(id: Int!, req: UserRequest): UserResponse
+  deleteUser(id: Int!): Boolean
+}
+
+# ----------------------
+# Tipos e Inputs
+# ----------------------
+type AppointmentNoteResponse {
+  idNote: ID!
+  idAppointment: Int!
+  noteText: String!
+}
+
+input AppointmentNoteRequest {
+  idAppointment: Int!
+  noteText: String!
+}
+
+type AttendanceLogResponse {
+  id: ID!
+  stylistId: Int!
+  stylistName: String
+  checkIn: String
+  checkOut: String
+}
+
+input AttendanceLogRequest {
+  stylistId: Int!
+  checkIn: String
+  checkOut: String
+}
+
+type ClientResponse {
+  id: ID!
+  first_name: String!
+  last_name: String!
+  email: String!
+  phone: String
+  registration_date: String
+  preferences: String
+  satisfaction_history: String
+}
+
+input ClientRequest {
+  first_name: String!
+  last_name: String!
+  email: String!
+  phone: String
+  preferences: String
+  satisfaction_history: String
+}
+
+type NotificationResponse {
+  id_notification: ID!
+  message: String!
+  sent_via: String!
+  sent_at: String
+}
+
+input NotificationRequest {
+  clientId: Int!
+  message: String!
+  sentVia: String!
+  sentAt: String
+}
+
+type PaymentResponse {
+  id_payment: ID!
+  amount: Float!
+  payment_date: String
+  id_appointment: Int!
+}
+
+input PaymentRequest {
+  amount: Float!
+  paymentDate: String
+  appointmentId: Int!
+}
+
+type PriceHistoryResponse {
+  idPrice: ID!
+  idService: Int!
+  serviceName: String
+  oldPrice: Float
+  newPrice: Float
+  changedAt: String
+  changedById: Int!
+  changedByName: String
+}
+
+input PriceHistoryRequest {
+  serviceId: Int!
+  oldPrice: Float
+  newPrice: Float
+  changedById: Int!
+}
+
+type RescheduleRequestResponse {
+  idRequest: ID!
+  appointmentId: Int!
+  clientId: Int!
+  requestedDate: String
+  status: String
+  reason: String
+  createdAt: String
+}
+
+input RescheduleRequestRequest {
+  appointmentId: Int!
+  clientId: Int!
+  requestedDate: String
+  status: String
+  reason: String
+}
+
+type ServiceResponse {
+  id: ID!
+  serviceName: String!
+  description: String
+  price: Float!
+  estimatedDuration: String
+  categoryName: String
+  createdAt: String
+}
+
+input ServiceRequest {
+  serviceName: String!
+  description: String
+  price: Float!
+  estimatedDuration: String
+  categoryId: Int
+}
+
+type StylistResponse {
+  idStylist: ID!
+  firstName: String!
+  lastName: String!
+  specialty: String
+  workSchedule: String
+  available: Boolean
+}
+
+input StylistRequest {
+  firstName: String!
+  lastName: String!
+  specialty: String
+  workSchedule: String
+  available: Boolean
+}
+
+type StylistServiceResponse {
+  idStylist: Int!
+  stylistName: String
+  idService: Int!
+  serviceName: String
+}
+
+input StylistServiceRequest {
+  stylistId: Int!
+  serviceId: Int!
+}
+
+type UserResponse {
+  idUser: Int!
+  userName: String!
+  role: String!
+  idClient: Int
+  clientName: String
+  idStylist: Int
+  stylistName: String
+}
+
+input UserRequest {
+  username: String!
+  password: String!
+  role: String!
+  clientId: Int
+  stylistId: Int
+}
